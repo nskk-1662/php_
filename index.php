@@ -49,7 +49,7 @@
       return $stmt;
     }
 
-    //DBから投稿内容を取得
+    //DBから投稿内容を取得（最新の一件）
     function select_new(){
       $dbh = connectDB();
       $sql = "SELECT * FROM message ORDER BY time desc ";
