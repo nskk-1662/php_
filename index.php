@@ -18,22 +18,20 @@
 
     チャット履歴
   </form>
+
   <section>
     <?php
-    //投稿内容の表示
-    echo $message['time'],":",$message['name'],":",$message['message'];
-    echo nl2br("\n");
 
     //投稿内容の登録
-    if(isset($_POST["send"])){
       insert();
       //投稿した内容の表示
       $stmt = select_new();
       foreach($stmt -> fetchAll(PDO::FETCH_ASSOC) as $message){
-        echo $message['time'],": ",$message['name'],":",$message['message'];
+        $abx = htmlentities($message['message']);
+        echo $message['time'],": ",$message['name'],":",$abx;
         echo nl2br("\n");
       }
-    }
+
 
     //DB接続
     function connectDB(){
@@ -41,6 +39,7 @@
       return $dbh;
     }
 
+    //DB内容の取得
     function select(){
       $dbh = connectDB();
       $sql = "SELECT * FROM message ORDER BY time";
@@ -49,7 +48,7 @@
       return $stmt;
     }
 
-    //DBから投稿内容を取得（最新の一件）
+    //DBから投稿内容を取得
     function select_new(){
       $dbh = connectDB();
       $sql = "SELECT * FROM message ORDER BY time desc ";
