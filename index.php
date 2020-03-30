@@ -1,6 +1,7 @@
 <?php
 $error_message = array();
 
+if(!empty($_POST['send'])){
 // 名前の入力チェック
 if(empty($_POST['name'])) {
 $error_message[] = '名前を入力してください。';
@@ -8,6 +9,40 @@ $error_message[] = '名前を入力してください。';
 // メッセージの入力チェック
 if(empty($_POST['message'])) {
 $error_message[] = 'メッセージを入力してください。';
+}
+}
+
+//DB接続
+function connectDB(){
+  $dbh = new PDO('mysql:host=localhost;dbname=chat','root','');
+  return $dbh;
+}
+
+//DB内容の取得
+function select(){
+  $dbh = connectDB();
+  $sql = "SELECT * FROM message ORDER BY time";
+  $stmt = $dbh -> prepare($sql);
+  $stmt -> execute();
+  return $stmt;
+}
+
+//DBから投稿内容を取得
+function select_new(){
+  $dbh = connectDB();
+  $sql = "SELECT * FROM message ORDER BY time desc ";
+  $stmt = $dbh ->prepare($sql);
+  $stmt ->execute();
+  return $stmt;
+}
+
+// DBから投稿内容を登録
+function insert() {
+  $dbh = connectDB();
+  $sql = "INSERT INTO message (name, message, time) VALUES (:name, :message, now())";
+  $stmt = $dbh->prepare($sql);
+  $params = array(':name'=>$_POST['name'], ':message'=>$_POST['message']);
+  $stmt->execute($params);
 }
 
 ?>
@@ -75,6 +110,37 @@ hr {
 .error_message{
   color:#ff0000;
 }
+
+h2{
+  color:#209eff;
+}
+
+article{
+  display:block;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: radial-gradient( circle at 0% 0%, #ffc4d2, #7bc6e2);;
+}
+	.info {
+		margin-bottom: 5px;
+	}
+	.info h3 {
+    display: inline-block;
+		margin-right: 10px;
+		color: #222;
+		font-size: 86%;
+	}
+	.info time {
+		color: black;
+		font-size: 72%;
+    text-align: right;
+    display: inline-block;
+	}
+article p {
+    color: #555;
+    }
+
   </style>
 </head>
 <body>
@@ -84,7 +150,7 @@ hr {
   <?php if( !empty($error_message) ): ?>
 	<ul class="error_message">
 		<?php foreach( $error_message as $value ): ?>
-			<li>・<?php echo $value; ?></li>
+			<li><?php echo $value; ?></li>
 		<?php endforeach; ?>
 	</ul>
   <?php endif; ?>
@@ -99,62 +165,38 @@ hr {
   		<textarea id="message" name="message"></textarea>
   	</div>
 
-    <button name="send" type="submit">送信</button> <br>
+    <input name="send" type="submit" value='送信'> <br>
 
   </form>
   <hr>
-  <div>チャット履歴</div>
-
-
   <section>
+    <h2>チャット履歴</h2>
+
     <?php
     //投稿内容の登録
+    if(!empty($_POST['send'])){
     if (empty($error_message)){
       insert();
     }
+  }
+    ?>
+    <?php
     //投稿した内容の表示
     $stmt = select_new();
-    foreach($stmt -> fetchAll(PDO::FETCH_ASSOC) as $message){
-      $abx = htmlentities($message['message']);
-      $abc = htmlentities($message['name']);
-      echo $message['time'],": ",$abc,":",$abx;
-      echo nl2br("\n");
-    }
-
-    //DB接続
-    function connectDB(){
-      $dbh = new PDO('mysql:host=localhost;dbname=chat','root','');
-      return $dbh;
-    }
-
-    //DB内容の取得
-    function select(){
-      $dbh = connectDB();
-      $sql = "SELECT * FROM message ORDER BY time";
-      $stmt = $dbh -> prepare($sql);
-      $stmt -> execute();
-      return $stmt;
-    }
-
-    //DBから投稿内容を取得
-    function select_new(){
-      $dbh = connectDB();
-      $sql = "SELECT * FROM message ORDER BY time desc ";
-      $stmt = $dbh ->prepare($sql);
-      $stmt ->execute();
-      return $stmt;
-    }
-
-    // DBから投稿内容を登録
-    function insert() {
-      $dbh = connectDB();
-      $sql = "INSERT INTO message (name, message, time) VALUES (:name, :message, now())";
-      $stmt = $dbh->prepare($sql);
-      $params = array(':name'=>$_POST['name'], ':message'=>$_POST['message']);
-      $stmt->execute($params);
-    }
-
     ?>
+    <?php foreach($stmt -> fetchAll(PDO::FETCH_ASSOC) as $message) :?>
+      <?php $abx = htmlentities($message['message']);
+      $abc = htmlentities($message['name']);?>
+
+      <article>
+          <div class="info">
+              <h3><?php echo $abc; ?></h3>
+              <time><?php echo $message['time']; ?></time>
+          </div>
+          <p><?php echo $abx; ?></p>
+      </article>
+
+    <?php endforeach; ?>
 
   </section>
 </body>
